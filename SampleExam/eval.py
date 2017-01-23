@@ -1,19 +1,23 @@
 import os.path,subprocess
 from subprocess import STDOUT,PIPE
-
-program_name = 'MaxSum.java'
+import sys
+import os.path
+import decrypt
 
 def get_content(filename):
 	with open(filename) as f:
 		return f.read()
 
-def execute(java_file, stdin):
-    java_class,ext = os.path.splitext(java_file)
-    subprocess.check_call(['javac', java_file])     #compile
-    cmd = ['java', java_class]                      #execute
-    proc = subprocess.Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
-    stdout,stderr = proc.communicate(stdin)
-    return stdout
+def execute(file, stdin):
+	filename,ext = os.path.splitext(file)
+	if ext == ".java":
+	    subprocess.check_call(['javac', "*.java"])     #compile
+	    cmd = ['java', "Solution"]                     #execute
+	else:
+		cmd = ['python', file]
+	proc = subprocess.Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+	stdout,stderr = proc.communicate(stdin)
+	return stdout
 
 def run_test(testcase_input,testcase_output):
 	input = get_content(testcase_input)
@@ -22,7 +26,7 @@ def run_test(testcase_input,testcase_output):
 	your_output = your_output.replace('\r','').rstrip() #remove trailing newlines, if any
 	return input,output,your_output,output==your_output
 
-def run_tests(inputs,outputs):
+def run_tests(inputs,outputs,extension):
 	passed = 0
 	for i in range(len(inputs)):
 		result = run_test(inputs[i],outputs[i])
@@ -59,4 +63,19 @@ for root,dirs,files in os.walk('.'):
 
 inputs = sorted(inputs)
 outputs = sorted(outputs)
-run_tests(inputs,outputs)
+
+if len(sys.argv)==2 and os.path.isfile(sys.argv[1]):
+    if sys.argv[1].endswith(".java"):
+    	program_name = sys.argv[1]
+    	extension = ".java"
+    	run_tests(inputs,outputs,extension)
+    elif sys.argv[1].endswith(".py"):
+    	program_name = sys.argv[1]
+    	extension = ".py"
+    	run_tests(inputs,outputs,extension)
+    elif sys.argv[1] == "eval.py":
+    	print "eval.py cannot be passed as argument"
+    else:
+    	print "Invalid Extension.\nPass only .java or .py files"
+else:
+    print "File not found.\nPass a valid filename with extension as argument.\npython eval.py <filename>"
