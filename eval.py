@@ -2,7 +2,12 @@ import os.path,subprocess
 from subprocess import STDOUT,PIPE
 import sys
 import os.path
-import decrypt
+import hashlib
+
+def computeMD5hash(string):
+    m = hashlib.md5()
+    m.update(string.encode('utf-8'))
+    return m.hexdigest()
 
 def get_content(filename):
 	with open(filename) as f:
@@ -21,19 +26,24 @@ def execute(file, stdin):
 
 def run_test(testcase_input,testcase_output):
 	input = get_content(testcase_input)
+	md5input = get_content("md5/"+testcase_input)
 	output = get_content(testcase_output)
+	md5output = get_content("md5/"+testcase_output)
 	your_output = execute(program_name, input)
 	your_output = your_output.replace('\r','').rstrip() #remove trailing newlines, if any
+	if computeMD5hash(input) != md5input or computeMD5hash(output) != md5output:
+		return False
 	return input,output,your_output,output==your_output
 
 def run_tests(inputs,outputs,extension):
 	passed = 0
 	for i in range(len(inputs)):
 		result = run_test(inputs[i],outputs[i])
-		if result[3] == True:
+		if result == False:
+			print "########## Testcase "+str(i)+": Failed ##########"
+			print "Something is wrong with the testcase.\n"
+		elif result[3] == True:
 			print "########## Testcase "+str(i)+": Passed ##########"
-			print "Input: "
-			print result[0]+"\n"
 			print "Expected Output: "
 			print result[1]+"\n"
 			print "Your Output: "
@@ -41,8 +51,6 @@ def run_tests(inputs,outputs,extension):
 			passed+=1
 		else:
 			print "########## Testcase "+str(i)+": Failed ##########"
-			print "Input: "
-			print result[0]+"\n"
 			print "Expected Output: "
 			print result[1]+"\n"
 			print "Your Output: "
@@ -56,10 +64,11 @@ outputs = []
 # populate input and output lists
 for root,dirs,files in os.walk('.'):
 	for file in files:
-		if 'input' in file and '.txt' in file:
+		if 'input' in file and '.txt' in file and "md5" not in file:
 			inputs.append(file)
-		if 'output' in file and '.txt' in file:
+		if 'output' in file and '.txt' in file and "md5" not in file:
 			outputs.append(file)
+	break
 
 inputs = sorted(inputs)
 outputs = sorted(outputs)
